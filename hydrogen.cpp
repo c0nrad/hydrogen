@@ -1,7 +1,27 @@
 #include <iostream>
 #include <ginac/ginac.h>
 
-GiNaC::ex RodriguesForumla(const GiNaC::symbol &x, int l)
+const int BUCKET_COUNT = 50;
+
+struct Measurement
+{
+    double r, theta, phi;
+    double p;
+
+    Measurement(double r, double theta, double phi, double p) : r(r), theta(theta), phi(phi), p(p)
+    {
+    }
+};
+
+void PrintJSON(std::vector<Measurement> v)
+{
+    for (Measurement m : v)
+    {
+        std::printf("{ \"r\": %f, \"theta\": %f, \"phi\": %f, \"p\": %f},", m.r, m.theta, m.phi, m.p);
+    }
+}
+
+GiNaC::ex RodriguesFormula(const GiNaC::symbol &x, int l)
 {
     GiNaC::ex diffed = GiNaC::pow(GiNaC::pow(x, 2) - 1, l);
     return GiNaC::normal(1 / (GiNaC::pow(2, l) * GiNaC::factorial(l)) * GiNaC::diff(diffed, x, l));
@@ -9,7 +29,8 @@ GiNaC::ex RodriguesForumla(const GiNaC::symbol &x, int l)
 
 GiNaC::ex AssociatedLegendreFunction(const GiNaC::symbol &x, int m, int l)
 {
-    GiNaC::ex diffed = GiNaC::diff(RodriguesForumla(x, l), x, m);
+
+    GiNaC::ex diffed = GiNaC::diff(RodriguesFormula(x, l), x, m);
     return GiNaC::normal(GiNaC::pow(-1, m) * GiNaC::pow(1 - GiNaC::pow(x, 2), GiNaC::numeric(m) / 2) * diffed);
 }
 
@@ -28,11 +49,9 @@ GiNaC::ex AssociatedLaguerrePolynomial(const GiNaC::symbol &x, int p, int q)
     return GiNaC::normal((GiNaC::pow(x, -p) * GiNaC::exp(x) / GiNaC::factorial(q)) * diffed);
 }
 
-GiNaC::ex HydrogrenWaveFunction(const GiNaC::symbol r, const GiNaC::symbol theta, const GiNaC::symbol phi, int n, int l, int m)
+GiNaC::ex HydrogrenWaveFunction(const GiNaC::symbol r, const GiNaC::symbol theta, const GiNaC::symbol phi, const GiNaC::symbol a, int n, int l, int m)
 {
     GiNaC::symbol tmp("tmp");
-    // GiNaC::numeric a = .0000000000529;
-    GiNaC::symbol a("a");
     GiNaC::ex p1 = GiNaC::sqrt(GiNaC::pow(2 / (n * a), 3) * (GiNaC::factorial(n - l - 1) / (2 * n * GiNaC::factorial(n + l))));
     GiNaC::ex p2 = GiNaC::exp(-r / (n * a));
     GiNaC::ex p3 = GiNaC::pow(2 * r / (n * a), l);
@@ -74,7 +93,7 @@ int main()
     std::cout << "Rodrigues Formula:" << std::endl;
     for (int i = 0; i < 10; i++)
     {
-        std::cout << "P_" << i << "(x) == " << RodriguesForumla(x, i) << std::endl;
+        std::cout << "P_l=" << i << " = " << RodriguesFormula(x, i) << std::endl;
     }
 
     std::cout << "Associated Legendre Function:" << std::endl;
@@ -115,13 +134,34 @@ int main()
 
     std::cout
         << "Hydrogen Wave Function:" << std::endl;
-    for (int n = 1; n <= 4; n++)
+    GiNaC::symbol a("a");
+    for (int n = 2; n <= 2; n++)
     {
-        for (int l = 0; l < n; l++)
+        for (int l = 1; l <= n - 1; l++)
         {
-            for (int m = 0; m <= l; m++)
+            for (int m = 0; m < l; m++)
             {
-                std::cout << "L_" << n << l << m << "(r, theta, phi) == " << simplify(HydrogrenWaveFunction(r, theta, phi, n, l, m), simplifyMap) << std::endl;
+                std::printf("n=%d, l=%d, m=%d\n", n, l, m);
+
+                GiNaC::ex psi = simplify(HydrogrenWaveFunction(r, theta, phi, a, n, l, m), simplifyMap).subs(a == 1);
+
+                std::vector<Measurement> measurements;
+                int sample_size = 1000;
+                for (int i = 0; i < sample_size; i++)
+                {
+                    double randR = ((float)rand() / (float)(RAND_MAX)) * 10;                    // 0 -> 5
+                    double randTheta = ((float)rand() / (float)(RAND_MAX)) * M_PI - (M_PI / 2); // -pi -> pi
+                    double randPhi = ((float)rand() / (float)(RAND_MAX)) * 2 * M_PI;            // 0->2pi
+                    GiNaC::ex probabilityEx = GiNaC::pow(psi.subs(GiNaC::lst{r == randR, theta == randTheta, phi == randPhi}), 2).evalf();
+                    double probability = GiNaC::ex_to<GiNaC::numeric>(probabilityEx).to_double();
+
+                    std::printf("r=%f, theta=%f, phi=%f, p=%f\n", randR, randTheta, randPhi, probability);
+
+                    Measurement m = Measurement(randR, randTheta, randPhi, probability);
+                    measurements.push_back(m);
+                }
+
+                PrintJSON(measurements);
             }
         }
     }
