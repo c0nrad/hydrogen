@@ -61,6 +61,7 @@ function mergeQuantumNumber(n, l, m): string {
 }
 
 function getColor(n, l, m: number): string {
+    return "#0275d8"
     var colors = ["#0275d8", "#5cb85c", "#5bc0de", "#f0ad4e", "#d9534f", "#292b2c", "#f7f7f7"]
 
     let q = mergeQuantumNumber(n, l, m)
