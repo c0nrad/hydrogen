@@ -4,6 +4,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { wavefunctionData } from './data'
 import * as Stats from 'stats.js'
 
+import * as dat from 'dat.gui';
+
 interface Wavefunction {
     n: number
     l: number
@@ -11,6 +13,34 @@ interface Wavefunction {
 
     data: any
 }
+
+
+var state = {
+    minProb: .00001,
+    wavefunction: "322",
+}
+
+var gui = new dat.GUI();
+function initGui() {
+
+    gui.add(state, "minProb").onChange(() => {
+        clearData();
+        initData();
+    })
+
+    let wavefunctions = []
+    for (let w of wavefunctionData) {
+        wavefunctions.push(mergeQuantumNumber(w.n, w.l, w.m))
+    }
+
+    // Choose from accepted values
+    gui.add(state, 'wavefunction', wavefunctions).onChange(() => {
+        clearData();
+        initData();
+    })
+
+}
+
 
 var container;
 var camera: THREE.Camera
@@ -20,54 +50,36 @@ var controls: OrbitControls
 
 //http://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
 
-var maxElements = 50;
-var dataIndex = 0;
-var minimumProbability = 0.00001
 // var minimumProbability = 0.000001
 
 var stats = new Stats();
 stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom);
 
+function mergeQuantumNumber(n, l, m): string {
+    return "" + n + l + m;
+}
+
 function getColor(n, l, m: number): string {
-    let out = ""
-    switch (n) {
-        case 2:
-            out += "#00"
-            break
-        case 3:
-            out += "#8B"
-            break
-        case 4:
-            out += "#FF"
-            break
+    var colors = ["#0275d8", "#5cb85c", "#5bc0de", "#f0ad4e", "#d9534f", "#292b2c", "#f7f7f7"]
+
+    let q = mergeQuantumNumber(n, l, m)
+    switch (q) {
+        case "200":
+            return colors[0];
+        case "210":
+            return colors[1];
+        case "211":
+            return colors[2];
+        case "300":
+            return colors[3];
+        case "310":
+            return colors[4];
+        case "320":
+            return colors[5];
     }
 
-    switch (l) {
-        case 0:
-            out += "00"
-            break
-        case 1:
-            out += "8B"
-            break
-        case 2:
-            out += "FF"
-            break
-    }
-
-    switch (m) {
-        case 0:
-            out += "00"
-            break
-        case 1:
-            out += "8B"
-            break
-        case 2:
-            out += "FF"
-            break
-    }
-
-    return out
+    return "white"
 }
 
 function getAlpha(p: number): number {
@@ -103,29 +115,8 @@ function init() {
 
     scene = new THREE.Scene();
 
-    // renderData();
+    initGui()
     initData()
-    // var vertices = [];
-
-    // for (var i = 0; i < 10000; i++) {
-
-    //     var x = THREE.MathUtils.randFloatSpread(2000);
-    //     var y = THREE.MathUtils.randFloatSpread(2000);
-    //     var z = THREE.MathUtils.randFloatSpread(2000);
-
-    //     vertices.push(x, y, z);
-
-    // }
-
-    // var geometry = new THREE.BufferGeometry();
-    // geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-
-    // var material = new THREE.PointsMaterial({ color: 0x888888 });
-
-    // var points = new THREE.Points(geometry, material);
-
-    // scene.add(points);
-
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -135,82 +126,68 @@ function init() {
     controls.autoRotateSpeed = 5
     controls.autoRotate = true
 
-    var geometry = new THREE.SphereGeometry(1, 4, 4);
-    var material = new THREE.MeshBasicMaterial({ color: "red" });
-    var sphere = new THREE.Mesh(geometry, material);
-    sphere.userData["p"] = 100000000000
-    scene.add(sphere);
-
     controls.update()
     window.addEventListener('resize', onWindowResize, false);
 }
 
-function renderData() {
-    for (let wavefunction of wavefunctionData) {
-        console.log(wavefunction.n, wavefunction.l, wavefunction.m, wavefunction.count)
-        while (wavefunction.count < maxElements) {
-            if (dataIndex >= wavefunction.data.length) {
-                dataIndex = 0
-            }
-
-            let d = wavefunction.data[dataIndex];
-            if (Math.random() < d.p * 200) {
-                var geometry = new THREE.SphereGeometry(.5, 4, 4);
-                var material = new THREE.MeshBasicMaterial({ color: getColor(wavefunction.n, wavefunction.l, wavefunction.m) });
-                var sphere = new THREE.Mesh(geometry, material);
-                sphere.position.setFromSphericalCoords(d.r * 3, d.phi, d.theta);
-                sphere.userData["p"] = d.p * 100000
-                sphere.userData["n"] = wavefunction.n
-                sphere.userData["l"] = wavefunction.l
-                sphere.userData["m"] = wavefunction.m
-                scene.add(sphere);
-
-                wavefunction.count++
-            }
-            dataIndex++
-        }
+function clearData() {
+    while (scene.children.length != 0) {
+        scene.remove(scene.children[0])
     }
 }
 
 function initData() {
-    var vertices = [];
-    var alphas = [];
+    console.log(state)
+
+    var geometry = new THREE.SphereGeometry(.5, 4, 4);
+    var material = new THREE.MeshBasicMaterial({ color: "red" });
+    var sphere = new THREE.Mesh(geometry, material);
+    scene.add(sphere);
+
 
     for (let wavefunction of wavefunctionData) {
-        console.log(wavefunction.n, wavefunction.l, wavefunction.m, wavefunction.count)
+        console.log(wavefunction.n, wavefunction.l, wavefunction.m)
+
+        if (state.wavefunction[0] != wavefunction.n.toString() ||
+            state.wavefunction[1] != wavefunction.l.toString() ||
+            state.wavefunction[2] != wavefunction.m.toString()) {
+            continue
+        }
+        console.log("MATCH")
+
+        let vertices = [];
+        let alphas = [];
 
         for (let d of wavefunction.data) {
-            if (d.p <= minimumProbability) {
+            if ((d.p) <= state.minProb) {
                 continue
             }
 
-            var v = new THREE.Vector3(0, 0, 0);
+            let v = new THREE.Vector3(0, 0, 0);
             v.setFromSphericalCoords(d.r * 5, d.phi, d.theta);
             vertices.push(v.x, v.y, v.z);
-            console.log(d.r, d.phi, d.theta, d.p, "calulated", v.x, v.y, v.z)
-
 
             alphas.push(getAlpha(d.p))
         }
 
-        var geometry = new THREE.BufferGeometry();
+        let geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
         geometry.addAttribute('alpha', new THREE.Float32BufferAttribute(alphas, 1));
 
         // uniforms
         let uniforms = {
-            color: { value: new THREE.Color(0xffff00) },
+            color: { value: new THREE.Color(getColor(wavefunction.n, wavefunction.l, wavefunction.m)) },
         };
 
         // point cloud material
-        var shaderMaterial = new THREE.ShaderMaterial({
+        let shaderMaterial = new THREE.ShaderMaterial({
             uniforms: uniforms,
             vertexShader: document.getElementById('vertexshader').textContent,
             fragmentShader: document.getElementById('fragmentshader').textContent,
             transparent: true
         });
 
-        var points = new THREE.Points(geometry, shaderMaterial);
+        let points = new THREE.Points(geometry, shaderMaterial);
 
         scene.add(points);
     }
@@ -245,7 +222,6 @@ function animate() {
 
     render();
     stats.end();
-
 }
 
 function render() {
