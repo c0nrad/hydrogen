@@ -1,7 +1,7 @@
 #include <iostream>
 #include <ginac/ginac.h>
 
-const int SAMPLE_SIZE = 2000;
+const int SAMPLE_SIZE = 5000;
 const int WAVEFUNCTION_COUNT = 20;
 
 struct Measurement

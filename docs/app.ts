@@ -15,27 +15,28 @@ interface Wavefunction {
 }
 
 var state = {
-    minProb: .00001,
+    minProb: .000001,
+    points: 50,
     wavefunction: "322",
 }
 
 var gui = new dat.GUI();
 function initGui() {
 
-    gui.add(state, "minProb").onChange(() => {
-        clearData();
-        initData();
-    })
-
     let wavefunctions = []
     for (let w of wavefunctionData) {
         wavefunctions.push(mergeQuantumNumber(w.n, w.l, w.m))
     }
 
-    // Choose from accepted values
-    gui.add(state, 'wavefunction', wavefunctions).onChange(() => {
+    gui.add(state, 'wavefunction', wavefunctions).name("Ψ(n,l,m)^2").onChange(() => {
         clearData();
         initData();
+    })
+
+    gui.add(state, "points", 0, 100).name("Points").onChange(() => {
+        clearData();
+        initData();
+
     })
 
 }
@@ -61,24 +62,6 @@ function mergeQuantumNumber(n, l, m): string {
 function getColor(n, l, m: number): string {
     return "#0275d8"
     var colors = ["#0275d8", "#5cb85c", "#5bc0de", "#f0ad4e", "#d9534f", "#292b2c", "#f7f7f7"]
-
-    let q = mergeQuantumNumber(n, l, m)
-    switch (q) {
-        case "200":
-            return colors[0];
-        case "210":
-            return colors[1];
-        case "211":
-            return colors[2];
-        case "300":
-            return colors[3];
-        case "310":
-            return colors[4];
-        case "320":
-            return colors[5];
-    }
-
-    return "white"
 }
 
 function getAlpha(p: number): number {
@@ -153,7 +136,9 @@ function initData() {
         let vertices = [];
         let alphas = [];
 
-        for (let i = 0; i < wavefunction.p.length; i++) {
+        let total = wavefunction.p.length * (state.points / 100)
+
+        for (let i = 0; i < total; i++) {
             if ((wavefunction.p[i]) <= state.minProb) {
                 continue
             }
