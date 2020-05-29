@@ -2,7 +2,9 @@
 #include <ginac/ginac.h>
 
 const int BUCKET_COUNT = 50;
-const int SAMPLE_SIZE = 10;
+const int SAMPLE_SIZE = 1000;
+
+const int WAVEFUNCTION_COUNT = 1;
 
 struct Measurement
 {
@@ -13,6 +15,11 @@ struct Measurement
     {
     }
 };
+
+bool compareByProbability(const Measurement &a, const Measurement &b)
+{
+    return a.p > b.p;
+}
 
 void PrintJSON(int n, int m, int l, std::vector<Measurement> v)
 {
@@ -118,40 +125,50 @@ int main()
 
     std::printf("export let wavefunctionData = [\n");
     bool isFirst = true;
-    for (int n = 2; n <= 3; n++)
+    int count = 0;
+
+    for (int n = 2; n <= 10; n++)
     {
         for (int l = 0; l < n; l++)
         {
             for (int m = 0; m <= l; m++)
             {
-                // std::printf("%d %d %d\n", n, l, m);
-                if (isFirst)
+                if (count >= WAVEFUNCTION_COUNT)
                 {
-                    isFirst = false;
+                    goto end;
                 }
-                else
+                // std::printf("%d %d %d\n", n, l, m);
+                if (count != 0)
                 {
                     std::printf(",\n");
                 }
                 GiNaC::ex psi = simplify(HydrogrenWaveFunction(r, theta, phi, a, n, l, m), simplifyMap).subs(a == 1);
 
                 std::vector<Measurement> measurements;
-                for (int i = 0; i < SAMPLE_SIZE; i++)
+                while (measurements.size() < SAMPLE_SIZE)
                 {
-                    double randR = ((float)rand() / (float)(RAND_MAX)) * 100;                   // 0 -> 5
+                    double randR = ((float)rand() / (float)(RAND_MAX)) * 50;                    // 0 -> 5
                     double randTheta = ((float)rand() / (float)(RAND_MAX)) * M_PI - (M_PI / 2); // -pi -> pi
                     double randPhi = ((float)rand() / (float)(RAND_MAX)) * 2 * M_PI;            // 0->2pi
                     GiNaC::ex probabilityEx = GiNaC::pow(psi.subs(GiNaC::lst{r == randR, theta == randTheta, phi == randPhi}), 2).evalf();
                     double probability = GiNaC::ex_to<GiNaC::numeric>(probabilityEx).to_double();
 
+                    if (probability < .000001)
+                    {
+                        continue;
+                    }
+
                     Measurement m = Measurement(randR, randTheta, randPhi, probability);
                     measurements.push_back(m);
                 }
 
+                std::sort(measurements.begin(), measurements.end(), compareByProbability);
                 PrintJSON(n, l, m, measurements);
+                count++;
             }
         }
     }
+end:
     std::printf("]\n");
 
     return 0;
