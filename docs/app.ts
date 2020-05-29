@@ -17,7 +17,7 @@ interface Wavefunction {
 var state = {
     minProb: .000001,
     points: 50,
-    wavefunction: "322",
+    wavefunction: "422",
 }
 
 var gui = new dat.GUI();
