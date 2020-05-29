@@ -14,7 +14,6 @@ interface Wavefunction {
     data: any
 }
 
-
 var state = {
     minProb: .00001,
     wavefunction: "322",
@@ -40,7 +39,6 @@ function initGui() {
     })
 
 }
-
 
 var container;
 var camera: THREE.Camera
@@ -90,16 +88,13 @@ function getAlpha(p: number): number {
     if (p > .01) {
         return .8
     }
-
     if (p > .001) {
-        return .6
+        return .5
     }
     if (p > .0001) {
-        return .4
-    }
-    if (p > .00001) {
         return .2
     }
+
     return .1
 }
 
@@ -112,7 +107,7 @@ function init() {
     document.body.appendChild(container);
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
-    camera.position.z = 100;
+    camera.position.z = 200;
 
     scene = new THREE.Scene();
 
@@ -154,21 +149,20 @@ function initData() {
             state.wavefunction[2] != wavefunction.m.toString()) {
             continue
         }
-        console.log("MATCH")
 
         let vertices = [];
         let alphas = [];
 
-        for (let d of wavefunction.data) {
-            if ((d.p) <= state.minProb) {
+        for (let i = 0; i < wavefunction.p.length; i++) {
+            if ((wavefunction.p[i]) <= state.minProb) {
                 continue
             }
 
             let v = new THREE.Vector3(0, 0, 0);
-            v.setFromSphericalCoords(d.r * 5, d.phi, d.theta);
+            v.setFromSphericalCoords(wavefunction.r[i] * 5, wavefunction.phi[i], wavefunction.theta[i]);
             vertices.push(v.x, v.y, v.z);
 
-            alphas.push(getAlpha(d.p))
+            alphas.push(getAlpha(wavefunction.p[i]))
         }
 
         let geometry = new THREE.BufferGeometry();

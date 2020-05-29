@@ -2,7 +2,6 @@
 #include <ginac/ginac.h>
 
 const int SAMPLE_SIZE = 2000;
-
 const int WAVEFUNCTION_COUNT = 20;
 
 struct Measurement
@@ -43,7 +42,7 @@ void PrintJSON(int n, int l, int m, std::vector<Measurement> v)
 {
     //
     // export let wavefunctionData = [
-    //  { n: 1, m: 1, l: 1, data: [] }
+    //  { n: 1, m: 1, l: 1, p: [.1,.2], theta: [.1,.2], phi: [.2.3.4] }
     // }, { n: 2, m: 2}]
     //
     //
@@ -52,17 +51,50 @@ void PrintJSON(int n, int l, int m, std::vector<Measurement> v)
     //
     double avgP = averageProbability(v);
 
-    std::printf("{ \"n\": %d, \"l\": %d, \"m\": %d, \"avgP\": %d, \"data\": [", n, l, m, avgP);
+    std::printf("{ \"n\": %d, \"l\": %d, \"m\": %d, \"p\": [", n, l, m);
 
+    // print probabilities
     for (int i = 0; i < v.size(); i++)
     {
+        if (i != 0)
+            printf(",");
+
         Measurement m = v.at(i);
-        std::printf("{ \"r\": %f, \"theta\": %f, \"phi\": %f, \"p\": %f}", m.r, m.theta, m.phi, m.p);
-        if (i != v.size() - 1)
-        {
-            std::printf(",");
-        }
+        std::printf("%f", m.p);
     }
+
+    // print probabilities
+    std::printf("],\n \"r\": [");
+    for (int i = 0; i < v.size(); i++)
+    {
+        if (i != 0)
+            printf(",");
+
+        Measurement m = v.at(i);
+        std::printf("%f", m.r);
+    }
+
+    // print probabilities
+    std::printf("],\n \"theta\": [");
+    for (int i = 0; i < v.size(); i++)
+    {
+        if (i != 0)
+            printf(",");
+
+        Measurement m = v.at(i);
+        std::printf("%f", m.theta);
+    }
+
+    std::printf("],\n \"phi\": [");
+    for (int i = 0; i < v.size(); i++)
+    {
+        if (i != 0)
+            printf(",");
+
+        Measurement m = v.at(i);
+        std::printf("%f", m.phi);
+    }
+
     std::printf("]}");
 }
 
@@ -183,15 +215,7 @@ int main()
                 }
 
                 std::sort(measurements.begin(), measurements.end(), compareByProbability);
-                // std::printf("average: %f", averageProbability(measurements));
                 normalize(measurements);
-                // std::printf("average: %f", averageProbability(measurements));
-
-                // for (int i = 0; i < measurements.size(); i++)
-                // {
-                //     printf("%f ", measurements[i].p);
-                // }
-
                 PrintJSON(n, l, m, measurements);
                 count++;
             }
