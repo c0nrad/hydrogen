@@ -1,10 +1,9 @@
 #include <iostream>
 #include <ginac/ginac.h>
 
-const int BUCKET_COUNT = 50;
-const int SAMPLE_SIZE = 1000;
+const int SAMPLE_SIZE = 2000;
 
-const int WAVEFUNCTION_COUNT = 1;
+const int WAVEFUNCTION_COUNT = 20;
 
 struct Measurement
 {
@@ -21,7 +20,26 @@ bool compareByProbability(const Measurement &a, const Measurement &b)
     return a.p > b.p;
 }
 
-void PrintJSON(int n, int m, int l, std::vector<Measurement> v)
+double averageProbability(std::vector<Measurement> v)
+{
+    double sum = 0;
+    for (Measurement m : v)
+    {
+        sum += m.p;
+    }
+    return sum / double(v.size());
+}
+
+void normalize(std::vector<Measurement> &v)
+{
+    double average = averageProbability(v);
+    for (int i = 0; i < v.size(); i++)
+    {
+        v[i].p /= (average * 100);
+    }
+}
+
+void PrintJSON(int n, int l, int m, std::vector<Measurement> v)
 {
     //
     // export let wavefunctionData = [
@@ -32,7 +50,9 @@ void PrintJSON(int n, int m, int l, std::vector<Measurement> v)
     //
     //
     //
-    std::printf("{ \"n\": %d, \"l\": %d, \"m\": %d, \"count\": 0, \"data\": [", n, l, m);
+    double avgP = averageProbability(v);
+
+    std::printf("{ \"n\": %d, \"l\": %d, \"m\": %d, \"avgP\": %d, \"data\": [", n, l, m, avgP);
 
     for (int i = 0; i < v.size(); i++)
     {
@@ -147,7 +167,7 @@ int main()
                 std::vector<Measurement> measurements;
                 while (measurements.size() < SAMPLE_SIZE)
                 {
-                    double randR = ((float)rand() / (float)(RAND_MAX)) * 50;                    // 0 -> 5
+                    double randR = ((float)rand() / (float)(RAND_MAX)) * 70;                    // 0 -> 5
                     double randTheta = ((float)rand() / (float)(RAND_MAX)) * M_PI - (M_PI / 2); // -pi -> pi
                     double randPhi = ((float)rand() / (float)(RAND_MAX)) * 2 * M_PI;            // 0->2pi
                     GiNaC::ex probabilityEx = GiNaC::pow(psi.subs(GiNaC::lst{r == randR, theta == randTheta, phi == randPhi}), 2).evalf();
@@ -163,6 +183,15 @@ int main()
                 }
 
                 std::sort(measurements.begin(), measurements.end(), compareByProbability);
+                // std::printf("average: %f", averageProbability(measurements));
+                normalize(measurements);
+                // std::printf("average: %f", averageProbability(measurements));
+
+                // for (int i = 0; i < measurements.size(); i++)
+                // {
+                //     printf("%f ", measurements[i].p);
+                // }
+
                 PrintJSON(n, l, m, measurements);
                 count++;
             }
