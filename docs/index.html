@@ -10,14 +10,37 @@
         background-color: #000;
         color: #fff;
         font-family: Monospace;
-        font-size: 13px;
+        font-size: 11px;
         line-height: 24px;
         overscroll-behavior: none;
+    }
+
+    canvas {
+        display: block;
+    }
+
+    #info {
+        position: fixed;
+        bottom: 0px;
+        left: 0px;
+        padding: 0px;
+        margin: 0px;
+        box-sizing: border-box;
+        text-align: center;
+        z-index: 0;
+        cursor: ew-resize;
+        /* TODO Solve this in HTML */
+    }
+
+    #info a {
+        color: inherit;
     }
 </style>
 
 <body>
 
+    <p id="info">Made with ♥ by <a target="_blank" href="https://blog.c0nrad.io">c0nrad</a>. <a target="_blank"
+            href="https://github.com/c0nrad/hydrogen">code</a></p>
     <script type="x-shader/x-vertex" id="vertexshader">
 
         attribute float alpha;
