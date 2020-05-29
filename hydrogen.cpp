@@ -2,6 +2,7 @@
 #include <ginac/ginac.h>
 
 const int BUCKET_COUNT = 50;
+const int SAMPLE_SIZE = 10;
 
 struct Measurement
 {
@@ -13,12 +14,29 @@ struct Measurement
     }
 };
 
-void PrintJSON(std::vector<Measurement> v)
+void PrintJSON(int n, int m, int l, std::vector<Measurement> v)
 {
-    for (Measurement m : v)
+    //
+    // export let wavefunctionData = [
+    //  { n: 1, m: 1, l: 1, data: [] }
+    // }, { n: 2, m: 2}]
+    //
+    //
+    //
+    //
+    //
+    std::printf("{ \"n\": %d, \"l\": %d, \"m\": %d, \"count\": 0, \"data\": [", n, l, m);
+
+    for (int i = 0; i < v.size(); i++)
     {
-        std::printf("{ \"r\": %f, \"theta\": %f, \"phi\": %f, \"p\": %f},", m.r, m.theta, m.phi, m.p);
+        Measurement m = v.at(i);
+        std::printf("{ \"r\": %f, \"theta\": %f, \"phi\": %f, \"p\": %f}", m.r, m.theta, m.phi, m.p);
+        if (i != v.size() - 1)
+        {
+            std::printf(",");
+        }
     }
+    std::printf("]}");
 }
 
 GiNaC::ex RodriguesFormula(const GiNaC::symbol &x, int l)
@@ -88,83 +106,53 @@ GiNaC::ex simplify(const GiNaC::ex &x, const GiNaC::exmap &m)
 
 int main()
 {
-    GiNaC::symbol x("x");
-
-    std::cout << "Rodrigues Formula:" << std::endl;
-    for (int i = 0; i < 10; i++)
-    {
-        std::cout << "P_l=" << i << " = " << RodriguesFormula(x, i) << std::endl;
-    }
-
-    std::cout << "Associated Legendre Function:" << std::endl;
-    for (int l = 0; l < 3; l++)
-    {
-        for (int m = 0; m <= l; m++)
-        {
-            std::cout << "P_" << m << l << "(x) == " << AssociatedLegendreFunction(x, m, l) << std::endl;
-            std::cout << "P_" << m << l << "(cos(x)) == " << AssociatedLegendreFunction(x, m, l).subs(x == GiNaC::sin(x)) << std::endl;
-        }
-    }
 
     GiNaC::symbol r("r");
     GiNaC::symbol theta("theta");
     GiNaC::symbol phi("phi");
 
-    std::cout << "SphericalHarmonics:" << std::endl;
-    for (int l = 0; l < 3; l++)
-    {
-        for (int m = 0; m <= l; m++)
-        {
-            std::cout << "Y_" << m << l << "(theta, phi) == " << SphericalHarmonic(theta, phi, m, l) << std::endl;
-        }
-    }
-
     GiNaC::exmap simplifyMap;
     simplifyMap[GiNaC::exp(GiNaC::wild(0)) * GiNaC::exp(GiNaC::wild(1))] = GiNaC::exp(GiNaC::wild(0) + GiNaC::wild(1));
 
-    std::cout
-        << "Associated Laguerre Polynomials:" << std::endl;
-    for (int p = 0; p <= 2; p++)
-    {
-        for (int q = 0; q <= 2; q++)
-        {
-            std::cout << "L_" << p << q << "(x) == " << simplify(AssociatedLaguerrePolynomial(x, p, q), simplifyMap) << std::endl;
-        }
-    }
-
-    std::cout
-        << "Hydrogen Wave Function:" << std::endl;
     GiNaC::symbol a("a");
-    for (int n = 2; n <= 2; n++)
-    {
-        for (int l = 1; l <= n - 1; l++)
-        {
-            for (int m = 0; m < l; m++)
-            {
-                std::printf("n=%d, l=%d, m=%d\n", n, l, m);
 
+    std::printf("export let wavefunctionData = [\n");
+    bool isFirst = true;
+    for (int n = 2; n <= 3; n++)
+    {
+        for (int l = 0; l < n; l++)
+        {
+            for (int m = 0; m <= l; m++)
+            {
+                // std::printf("%d %d %d\n", n, l, m);
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    std::printf(",\n");
+                }
                 GiNaC::ex psi = simplify(HydrogrenWaveFunction(r, theta, phi, a, n, l, m), simplifyMap).subs(a == 1);
 
                 std::vector<Measurement> measurements;
-                int sample_size = 1000;
-                for (int i = 0; i < sample_size; i++)
+                for (int i = 0; i < SAMPLE_SIZE; i++)
                 {
-                    double randR = ((float)rand() / (float)(RAND_MAX)) * 10;                    // 0 -> 5
+                    double randR = ((float)rand() / (float)(RAND_MAX)) * 100;                   // 0 -> 5
                     double randTheta = ((float)rand() / (float)(RAND_MAX)) * M_PI - (M_PI / 2); // -pi -> pi
                     double randPhi = ((float)rand() / (float)(RAND_MAX)) * 2 * M_PI;            // 0->2pi
                     GiNaC::ex probabilityEx = GiNaC::pow(psi.subs(GiNaC::lst{r == randR, theta == randTheta, phi == randPhi}), 2).evalf();
                     double probability = GiNaC::ex_to<GiNaC::numeric>(probabilityEx).to_double();
 
-                    std::printf("r=%f, theta=%f, phi=%f, p=%f\n", randR, randTheta, randPhi, probability);
-
                     Measurement m = Measurement(randR, randTheta, randPhi, probability);
                     measurements.push_back(m);
                 }
 
-                PrintJSON(measurements);
+                PrintJSON(n, l, m, measurements);
             }
         }
     }
+    std::printf("]\n");
 
     return 0;
 }
