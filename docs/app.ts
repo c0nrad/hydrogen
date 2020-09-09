@@ -144,7 +144,7 @@ function initData() {
             }
 
             let v = new THREE.Vector3(0, 0, 0);
-            v.setFromSphericalCoords(wavefunction.r[i] * 5, wavefunction.phi[i], wavefunction.theta[i]);
+            v.setFromSphericalCoords(wavefunction.r[i] * 5, wavefunction.theta[i], wavefunction.phi[i]);
             vertices.push(v.x, v.y, v.z);
 
             alphas.push(getAlpha(wavefunction.p[i]))
