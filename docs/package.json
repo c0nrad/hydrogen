@@ -23,7 +23,7 @@
     },
     "dependencies": {
         "@types/dat.gui": "^0.7.5",
-        "chart.js": "^2.9.3",
+        "chart.js": "^2.9.4",
         "chartjs": "^0.3.24",
         "dat.gui": "^0.7.7",
         "stats.js": "^0.17.0",
