@@ -17,8 +17,8 @@
     },
     "homepage": "https://github.com/c0nrad/hydrogen#README",
     "devDependencies": {
-        "webpack": "^4.43.0",
-        "webpack-cli": "^3.3.11",
+        "webpack": "^5.75.0",
+        "webpack-cli": "^5.0.1",
         "webpack-dev-server": "^3.11.0"
     },
     "dependencies": {
@@ -28,7 +28,7 @@
         "dat.gui": "^0.7.7",
         "stats.js": "^0.17.0",
         "three": "^0.117.0",
-        "ts-loader": "^7.0.5",
+        "ts-loader": "^9.4.2",
         "tsc": "^1.20150623.0",
         "typescript": "^3.9.3"
     }
